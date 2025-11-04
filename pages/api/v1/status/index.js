@@ -9,8 +9,15 @@ async function status(request, response) {
   const maxConnections = await database.query("SHOW max_connections;");
   const maxConnectionsResult = parseInt(maxConnections.rows[0].max_connections);
 
-  const currentConnections = await database.query("SELECT COUNT(*) FROM pg_stat_activity;");
-  const currentConnectionsResult = parseInt(currentConnections.rows[0].count);
+  const databaseName = process.env.POSTGRES_DB;
+
+  const currentConnections = await database.query({
+    text: "SELECT COUNT(*)::int AS count FROM pg_stat_activity WHERE datname = $1;",
+    values: [databaseName],
+  });
+  const currentConnectionsResult = currentConnections.rows[0].count;
+
+  console.log(currentConnectionsResult);
 
   response.status(200).json({
     updated_at: updatedAt,
@@ -19,8 +26,8 @@ async function status(request, response) {
         version: databaseVersionResult,
         max_connections: maxConnectionsResult,
         current_connections: currentConnectionsResult,
-      }
-    }
+      },
+    },
   });
 }
 
