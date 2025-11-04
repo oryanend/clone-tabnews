@@ -17,8 +17,6 @@ async function status(request, response) {
   });
   const currentConnectionsResult = currentConnections.rows[0].count;
 
-  console.log(currentConnectionsResult);
-
   response.status(200).json({
     updated_at: updatedAt,
     dependencies: {
