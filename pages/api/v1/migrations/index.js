@@ -1,43 +1,59 @@
 import migrationRunner from "node-pg-migrate";
 import { join } from "node:path";
 import database from "infra/database.js";
+import { createRouter } from "next-connect";
+import controller from "infra/controller";
 
-export default async function migrations(request, response) {
-  const allowedMethods = ["GET", "POST"];
-  if (!allowedMethods.includes(request.method)) {
-    return response.status(405).json({
-      error: `Method ${request.method} Not Allowed`,
-    });
+const router = createRouter();
+
+router.get(async (request, response) => {
+  await getHandler(request, response, true);
+});
+
+router.post(async (request, response) => {
+  await postHandler(request, response, false);
+});
+
+export default router.handler(controller.errorsHandlers);
+
+async function getHandler(request, response, dryRun) {
+  const dbClient = await database.getNewClient();
+
+  const migratedMigrations = await migrationRunner({
+    dbClient,
+    dryRun: true,
+    dir: join(process.cwd(), "infra", "migrations"),
+    direction: "up",
+    verbose: true,
+    migrationsTable: "pgmigrations",
+  });
+
+  await dbClient.end();
+
+  if (!dryRun && migratedMigrations.length > 0) {
+    return response.status(201).json(migratedMigrations);
   }
 
-  if (request.method == "GET") {
-    await pendingMigrations(true);
+  return response.status(200).json(migratedMigrations);
+}
+
+async function postHandler(request, response) {
+  const dbClient = await database.getNewClient();
+
+  const migratedMigrations = await migrationRunner({
+    dbClient,
+    dryRun: false,
+    dir: join(process.cwd(), "infra", "migrations"),
+    direction: "up",
+    verbose: true,
+    migrationsTable: "pgmigrations",
+  });
+
+  await dbClient.end();
+
+  if (migratedMigrations.length > 0) {
+    return response.status(201).json(migratedMigrations);
   }
 
-  if (request.method == "POST") {
-    await pendingMigrations(false);
-  }
-
-  async function pendingMigrations(dryRunValue) {
-    const dbClient = await database.getNewClient();
-
-    const migratedMigrations = await migrationRunner({
-      dbClient: dbClient,
-      dryRun: dryRunValue,
-      dir: join("infra", "migrations"),
-      direction: "up",
-      verbose: true,
-      migrationsTable: "pgmigrations",
-    });
-
-    await dbClient.end();
-
-    if (migratedMigrations.length && dryRunValue !== true > 0) {
-      return response.status(201).json(migratedMigrations);
-    }
-
-    return response.status(200).json(migratedMigrations);
-  }
-
-  return response.status(405).end();
+  return response.status(200).json(migratedMigrations);
 }
