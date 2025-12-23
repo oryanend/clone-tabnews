@@ -37,8 +37,8 @@ export class MethodNotAllowedError extends Error {
 }
 
 export class ServiceError extends Error {
-  constructor() {
-    super("Serviços indisponíveis no momento.");
+  constructor({ message }) {
+    super(message || "Serviços indisponíveis no momento.");
     this.name = "ServiceError";
     this.action = "Verifique se o serviço está disponível.";
     this.statusCode = 503;
