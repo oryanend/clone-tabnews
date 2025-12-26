@@ -22,7 +22,8 @@ export class MethodNotAllowedError extends Error {
   constructor() {
     super("Método não permitido para este endpoint.");
     this.name = "MethodNotAllowedError";
-    this.action = "Verifique se o método HTTP está correto para este endpoint.";
+    this.action =
+      "Verifique se o método HTTP enviado é válido para este endpoint.";
     this.statusCode = 405;
   }
 
@@ -37,11 +38,33 @@ export class MethodNotAllowedError extends Error {
 }
 
 export class ServiceError extends Error {
-  constructor({ message }) {
-    super(message || "Serviços indisponíveis no momento.");
+  constructor({ cause, message }) {
+    super(message || "Serviço indisponível no momento.", {
+      cause,
+    });
     this.name = "ServiceError";
     this.action = "Verifique se o serviço está disponível.";
     this.statusCode = 503;
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      action: this.action,
+      statusCode: this.statusCode,
+    };
+  }
+}
+
+export class ValidationError extends Error {
+  constructor({ cause, message, action }) {
+    super(message || "Um erro de validação ocorreu.", {
+      cause,
+    });
+    this.name = "ValidationError";
+    this.action = action || "Ajuste os dados enviados e tente novamente.";
+    this.statusCode = 400;
   }
 
   toJSON() {
