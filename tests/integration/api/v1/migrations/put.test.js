@@ -20,7 +20,8 @@ describe("PUT /api/v1/migrations", () => {
         expect(responseBody).toEqual({
           name: "MethodNotAllowedError",
           message: "Método não permitido para este endpoint.",
-          action: "Verifique se o método HTTP está correto para este endpoint.",
+          action:
+            "Verifique se o método HTTP enviado é válido para este endpoint.",
           statusCode: 405,
         });
       });
