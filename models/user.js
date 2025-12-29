@@ -1,7 +1,6 @@
 import database from "infra/database.js";
 import password from "models/password.js";
 import { ValidationError, NotFoundError } from "infra/errors.js";
-import { up } from "infra/migrations/1766451287496_create-users";
 
 async function findByUsername(username) {
   const userFound = await runSelectQuery(username);
