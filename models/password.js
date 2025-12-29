@@ -1,9 +1,11 @@
 import bcrypt from "bcryptjs";
 import { environments } from "eslint-plugin-jest";
 
+const pepper = process.env.PASSWORD;
+
 async function hash(password) {
   const rounds = getNumberOfRounds();
-  return await bcrypt.hash(password, rounds);
+  return await bcrypt.hash(password + pepper, rounds);
 }
 
 function getNumberOfRounds() {
@@ -11,7 +13,7 @@ function getNumberOfRounds() {
 }
 
 async function compare(plainPassword, storedPassword) {
-  return await bcrypt.compare(plainPassword, storedPassword);
+  return await bcrypt.compare(plainPassword + pepper, storedPassword);
 }
 
 const password = {
