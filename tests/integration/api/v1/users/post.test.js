@@ -1,6 +1,8 @@
 import { version as uuidVersion } from "uuid";
 import orchestrator from "tests/orchestrator.js";
 import database from "infra/database.js";
+import user from "models/user";
+import password from "models/password";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -29,7 +31,7 @@ describe("POST /api/v1/users", () => {
         id: responseBody.id,
         username: "oryanend",
         email: "oryanend@example.com",
-        password: "somepassword123",
+        password: responseBody.password,
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
@@ -37,6 +39,19 @@ describe("POST /api/v1/users", () => {
       expect(uuidVersion(responseBody.id)).toBe(4);
       expect(Date.parse(responseBody.created_at)).not.toBeNaN();
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+
+      const userInDatabase = await user.findByUsername("oryanend");
+      const correctPasswordMatch = await password.compare(
+        "somepassword123",
+        userInDatabase.password,
+      );
+      expect(correctPasswordMatch).toBe(true);
+
+      const wrongPasswordMatch = await password.compare(
+        "wrongpassword",
+        userInDatabase.password,
+      );
+      expect(wrongPasswordMatch).toBe(false);
     });
 
     test("With duplicate 'email'", async () => {
@@ -70,7 +85,7 @@ describe("POST /api/v1/users", () => {
       expect(responseBody).toEqual({
         name: "ValidationError",
         message: "Email já está sendo utilizado.",
-        action: "Utilize outro email para cadastrar o usuário.",
+        action: "Utilize outro email para realizar esta operação.",
         statusCode: 400,
       });
     });
@@ -106,7 +121,7 @@ describe("POST /api/v1/users", () => {
       expect(responseBody).toEqual({
         name: "ValidationError",
         message: "Esse nome de usuário já está sendo utilizado.",
-        action: "Utilize outro nome de usuário para o cadastro.",
+        action: "Utilize outro nome de usuário para realizar esta operação.",
         statusCode: 400,
       });
     });
