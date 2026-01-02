@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import { environments } from "eslint-plugin-jest";
 
 const pepper = process.env.PASSWORD;
 
